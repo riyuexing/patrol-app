@@ -2,11 +2,12 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Plus, Search, Trash2, AlertCircle, CheckCircle, 
-  Clock, Construction, ClipboardList, RefreshCw, Calendar, ChevronDown, Filter, X, Tag, MoreHorizontal, Check, QrCode
+  Clock, Construction, ClipboardList, RefreshCw, Calendar, ChevronDown, Filter, X, Tag, MoreHorizontal, Check, QrCode, Radio
 } from 'lucide-react';
 import { db } from '../db';
 import { InspectionRecord, InspectionStatus } from '../types';
 import ScannerModal from '../components/ScannerModal';
+import NFCScannerModal from '../components/NFCScannerModal';
 
 interface InspectionListScreenProps {
   onViewDetail: (id: string) => void;
@@ -27,6 +28,7 @@ const InspectionListScreen: React.FC<InspectionListScreenProps> = ({ onViewDetai
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showScanner, setShowScanner] = useState(false);
+  const [showNFC, setShowNFC] = useState(false);
   
   // Swipe States
   const [swipedId, setSwipedId] = useState<string | null>(null);
@@ -94,6 +96,7 @@ const InspectionListScreen: React.FC<InspectionListScreenProps> = ({ onViewDetai
 
   const handleScanSuccess = (location: string, code: string) => {
     setShowScanner(false);
+    setShowNFC(false);
     onCreateNew({ location, code });
   };
 
@@ -334,6 +337,12 @@ const InspectionListScreen: React.FC<InspectionListScreenProps> = ({ onViewDetai
       {!isSelectionMode && (
         <div className="fixed bottom-24 right-6 flex flex-col gap-4 items-center z-30">
           <button 
+            onClick={() => setShowNFC(true)}
+            className="w-14 h-14 bg-indigo-600 text-white rounded-2xl shadow-xl flex items-center justify-center active:scale-90 transition-all border-2 border-white/20"
+          >
+            <Radio size={24} strokeWidth={2.5} className="animate-pulse" />
+          </button>
+          <button 
             onClick={() => setShowScanner(true)}
             className="w-14 h-14 bg-white text-blue-600 rounded-2xl shadow-xl flex items-center justify-center active:scale-90 transition-all border border-blue-100"
           >
@@ -352,6 +361,13 @@ const InspectionListScreen: React.FC<InspectionListScreenProps> = ({ onViewDetai
         <ScannerModal 
           onScanSuccess={handleScanSuccess} 
           onClose={() => setShowScanner(false)} 
+        />
+      )}
+
+      {showNFC && (
+        <NFCScannerModal 
+          onScanSuccess={handleScanSuccess} 
+          onClose={() => setShowNFC(false)} 
         />
       )}
     </div>

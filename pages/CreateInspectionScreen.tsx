@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Camera, MapPin, Check, X, Loader2, CheckCircle, AlertCircle, MessageSquare, Trash2, Wrench, ShieldCheck, QrCode } from 'lucide-react';
+import { Camera, MapPin, Check, X, Loader2, CheckCircle, AlertCircle, MessageSquare, Trash2, Wrench, ShieldCheck, QrCode, Radio } from 'lucide-react';
 import { db } from '../db';
 import { 
   InspectionRecord, InspectionStatus, ShiftType, User, 
@@ -9,6 +9,7 @@ import {
 import { SHIFTS, MOCK_TEMPLATES } from '../constants';
 import VoiceInputButton from '../components/VoiceInputButton';
 import ScannerModal from '../components/ScannerModal';
+import NFCScannerModal from '../components/NFCScannerModal';
 
 interface CreateInspectionScreenProps {
   onCancel: () => void;
@@ -26,6 +27,7 @@ const CreateInspectionScreen: React.FC<CreateInspectionScreenProps> = ({ onCance
   const [remark, setRemark] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
+  const [showNFC, setShowNFC] = useState(false);
   
   // 现场即时整改相关状态
   const [isRectifiedOnSite, setIsRectifiedOnSite] = useState(false);
@@ -52,6 +54,7 @@ const CreateInspectionScreen: React.FC<CreateInspectionScreenProps> = ({ onCance
     setLocation(loc);
     setLocationCode(code);
     setShowScanner(false);
+    setShowNFC(false);
   };
 
   const updateItemStatus = (id: string, result: 'NORMAL' | 'ABNORMAL') => {
@@ -91,7 +94,7 @@ const CreateInspectionScreen: React.FC<CreateInspectionScreenProps> = ({ onCance
   };
 
   const handleSave = async () => {
-    if (!location.trim()) return alert('请输入或扫描巡检地点');
+    if (!location.trim()) return alert('请输入或感应巡检地点');
     
     setIsSaving(true);
     await new Promise(r => setTimeout(r, 1200));
@@ -155,14 +158,22 @@ const CreateInspectionScreen: React.FC<CreateInspectionScreenProps> = ({ onCance
               <input 
                 type="text"
                 className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl outline-none font-black text-sm border-2 border-transparent focus:border-primary/10 transition-all dark:bg-gray-800 dark:text-white"
-                placeholder="请输入巡检地点..."
+                placeholder="地点感应或手动输入..."
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
               />
             </div>
             <button 
+              onClick={() => setShowNFC(true)}
+              className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center active:scale-95 transition-all dark:bg-indigo-500/10"
+              title="NFC 感应"
+            >
+              <Radio size={24} className="animate-pulse" />
+            </button>
+            <button 
               onClick={() => setShowScanner(true)}
               className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center active:scale-95 transition-all dark:bg-blue-500/10"
+              title="二维码扫描"
             >
               <QrCode size={24} />
             </button>
@@ -276,7 +287,6 @@ const CreateInspectionScreen: React.FC<CreateInspectionScreenProps> = ({ onCance
         </div>
       ) : (
         <div className="space-y-4 animate-in fade-in duration-500">
-           {/* 高级模式内容保持不变... */}
            <div className="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 dark:bg-gray-900 dark:border-gray-800">
              <select 
               className="w-full px-4 py-3 bg-primary/5 text-primary rounded-xl outline-none font-black text-sm appearance-none dark:bg-primary/10"
@@ -303,7 +313,6 @@ const CreateInspectionScreen: React.FC<CreateInspectionScreenProps> = ({ onCance
                     >异常</button>
                  </div>
                </div>
-               {/* 其余项逻辑同前 */}
              </div>
            ))}
         </div>
@@ -331,6 +340,13 @@ const CreateInspectionScreen: React.FC<CreateInspectionScreenProps> = ({ onCance
         <ScannerModal 
           onScanSuccess={handleScanSuccess} 
           onClose={() => setShowScanner(false)} 
+        />
+      )}
+
+      {showNFC && (
+        <NFCScannerModal 
+          onScanSuccess={handleScanSuccess} 
+          onClose={() => setShowNFC(false)} 
         />
       )}
     </div>
