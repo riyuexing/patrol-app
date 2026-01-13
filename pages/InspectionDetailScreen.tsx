@@ -89,6 +89,11 @@ const InspectionDetailScreen: React.FC<InspectionDetailScreenProps> = ({ inspect
 
   const statusCfg = getStatusDisplay(record.overallStatus);
 
+  // 对整改记录进行排序处理，确保最新的记录显示在时间轴上方
+  const sortedRectifyLogs = record.rectifyLogs 
+    ? [...record.rectifyLogs].sort((a, b) => b.timestamp - a.timestamp) 
+    : [];
+
   return (
     <div className="pb-48 animate-in fade-in duration-300">
       {/* Summary Banner */}
@@ -156,24 +161,30 @@ const InspectionDetailScreen: React.FC<InspectionDetailScreenProps> = ({ inspect
         {/* Timeline of Rectification */}
         {(record.overallStatus !== InspectionStatus.NORMAL || (record.rectifyLogs && record.rectifyLogs.length > 0)) && (
           <section className="space-y-4">
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">全周期整改记录</h3>
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">全周期整改记录 (最新进度居上)</h3>
             
             <div className="relative pl-8 space-y-8 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-1 before:bg-gray-100 dark:before:bg-gray-800 before:rounded-full">
-              <div className="relative">
-                <div className="absolute -left-[1.625rem] top-1 w-4 h-4 rounded-full bg-red-500 border-4 border-white dark:border-gray-900 shadow-sm ring-4 ring-red-50 dark:ring-red-500/10"></div>
-                <div className="bg-white p-5 rounded-[1.5rem] shadow-sm border border-gray-100 dark:bg-gray-900 dark:border-gray-800">
-                  <p className="text-[10px] font-black text-red-500 uppercase tracking-tighter mb-1">异常发现</p>
-                  <p className="text-xs font-bold text-gray-700 dark:text-gray-300">系统标记为“异常”状态，等待整改响应。</p>
-                  <p className="text-[9px] text-gray-300 mt-2 font-black">{new Date(record.timestamp).toLocaleString()}</p>
+              {/* 流程销号 - 闭环状态显示在最顶端 */}
+              {record.overallStatus === InspectionStatus.REVIEWED && (
+                <div className="relative">
+                  <div className="absolute -left-[1.625rem] top-1 w-4 h-4 rounded-full bg-primary border-4 border-white dark:border-gray-900 shadow-sm ring-4 ring-primary/10"></div>
+                  <div className="bg-primary p-5 rounded-[1.5rem] shadow-xl shadow-primary/10 text-white">
+                    <div className="flex justify-between items-center mb-1">
+                      <p className="text-[10px] font-black text-white/80 uppercase tracking-widest">流程销号</p>
+                      <ShieldCheck size={16} />
+                    </div>
+                    <p className="text-xs font-black">已确认隐患排除，巡检任务正式闭环。</p>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {record.rectifyLogs?.map((log, lIdx) => (
+              {/* 排序后的整改记录 */}
+              {sortedRectifyLogs.map((log, lIdx) => (
                 <div key={lIdx} className="relative">
                   <div className="absolute -left-[1.625rem] top-1 w-4 h-4 rounded-full bg-orange-500 border-4 border-white dark:border-gray-900 shadow-sm ring-4 ring-orange-50 dark:ring-orange-500/10"></div>
                   <div className="bg-white p-5 rounded-[1.5rem] shadow-sm border border-gray-100 border-l-4 border-l-orange-500 dark:bg-gray-900 dark:border-gray-800">
                     <div className="flex justify-between items-center mb-3">
-                      <p className="text-[10px] font-black text-orange-600 uppercase tracking-tighter">整改进度 #{lIdx + 1}</p>
+                      <p className="text-[10px] font-black text-orange-600 uppercase tracking-tighter">整改进度</p>
                     </div>
                     <p className="text-xs font-bold text-gray-800 dark:text-gray-200 mb-3">{log.remark}</p>
                     {log.photos && log.photos.length > 0 && (
@@ -190,18 +201,15 @@ const InspectionDetailScreen: React.FC<InspectionDetailScreenProps> = ({ inspect
                 </div>
               ))}
 
-              {record.overallStatus === InspectionStatus.REVIEWED && (
-                <div className="relative">
-                  <div className="absolute -left-[1.625rem] top-1 w-4 h-4 rounded-full bg-primary border-4 border-white dark:border-gray-900 shadow-sm ring-4 ring-primary/10"></div>
-                  <div className="bg-primary p-5 rounded-[1.5rem] shadow-xl shadow-primary/10 text-white">
-                    <div className="flex justify-between items-center mb-1">
-                      <p className="text-[10px] font-black text-white/80 uppercase tracking-widest">流程销号</p>
-                      <ShieldCheck size={16} />
-                    </div>
-                    <p className="text-xs font-black">已确认隐患排除，巡检任务正式闭环。</p>
-                  </div>
+              {/* 异常发现 - 作为起跑线，显示在时间轴最下方 */}
+              <div className="relative">
+                <div className="absolute -left-[1.625rem] top-1 w-4 h-4 rounded-full bg-red-500 border-4 border-white dark:border-gray-900 shadow-sm ring-4 ring-red-50 dark:ring-red-500/10"></div>
+                <div className="bg-white p-5 rounded-[1.5rem] shadow-sm border border-gray-100 dark:bg-gray-900 dark:border-gray-800">
+                  <p className="text-[10px] font-black text-red-500 uppercase tracking-tighter mb-1">异常发现</p>
+                  <p className="text-xs font-bold text-gray-700 dark:text-gray-300">系统标记为“异常”状态，等待整改响应。</p>
+                  <p className="text-[9px] text-gray-300 mt-2 font-black">{new Date(record.timestamp).toLocaleString()}</p>
                 </div>
-              )}
+              </div>
             </div>
           </section>
         )}
@@ -287,7 +295,7 @@ const InspectionDetailScreen: React.FC<InspectionDetailScreenProps> = ({ inspect
             </div>
             <div className="flex flex-col gap-3">
               <button 
-                onClick={() => handleReviewFinish(true)}
+                onClick={handleReviewFinish(true)}
                 className="w-full py-4 bg-primary text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/10 active:scale-95 transition-all"
               >
                 确认并结束任务
