@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
-import { Camera, MapPin, Check, X, Loader2, CheckCircle, AlertCircle, ChevronRight } from 'lucide-react';
+import { Camera, MapPin, Check, X, Loader2, CheckCircle, AlertCircle, MessageSquare, Trash2 } from 'lucide-react';
 import { db } from '../db';
 import { 
   InspectionRecord, InspectionStatus, ShiftType, User, 
-  AbnormalType, AbnormalLevel, InspectionItem 
+  InspectionItem 
 } from '../types';
 import { SHIFTS, MOCK_TEMPLATES } from '../constants';
 
@@ -33,7 +33,8 @@ const CreateInspectionScreen: React.FC<CreateInspectionScreenProps> = ({ onCance
         id: Math.random().toString(36).substr(2, 9),
         name,
         result: 'NORMAL',
-        photos: []
+        photos: [],
+        remark: ''
       })));
     }
   };
@@ -41,6 +42,23 @@ const CreateInspectionScreen: React.FC<CreateInspectionScreenProps> = ({ onCance
   const updateItemStatus = (id: string, result: 'NORMAL' | 'ABNORMAL') => {
     setItems(prev => prev.map(item => item.id === id ? { ...item, result } : item));
     if (result === 'ABNORMAL') setOverallStatus(InspectionStatus.ABNORMAL);
+  };
+
+  const updateItemRemark = (id: string, val: string) => {
+    setItems(prev => prev.map(item => item.id === id ? { ...item, remark: val } : item));
+  };
+
+  const addItemPhoto = (id: string) => {
+    // Mocking adding a photo
+    const mockPhoto = `https://picsum.photos/400/300?sig=${Math.random()}`;
+    setItems(prev => prev.map(item => item.id === id ? { ...item, photos: [...item.photos, mockPhoto] } : item));
+  };
+
+  const removeItemPhoto = (id: string, photoIndex: number) => {
+    setItems(prev => prev.map(item => item.id === id ? { 
+      ...item, 
+      photos: item.photos.filter((_, i) => i !== photoIndex) 
+    } : item));
   };
 
   const handleSave = async () => {
@@ -59,8 +77,8 @@ const CreateInspectionScreen: React.FC<CreateInspectionScreenProps> = ({ onCance
       inspector: user.username,
       timestamp: Date.now(),
       overallStatus,
-      remark,
-      items: mode === 'quick' ? [{ id: 'q1', name: '全项检查', result: overallStatus as any, photos: [] }] : items
+      remark: mode === 'quick' ? remark : '',
+      items: mode === 'quick' ? [{ id: 'q1', name: '全项检查', result: overallStatus as any, photos: [], remark }] : items
     };
 
     db.saveInspection(newRecord);
@@ -69,7 +87,7 @@ const CreateInspectionScreen: React.FC<CreateInspectionScreenProps> = ({ onCance
   };
 
   return (
-    <div className="p-4 pb-40 space-y-6">
+    <div className="p-4 pb-48 space-y-6">
       {/* 顶部页签 */}
       <div className="flex bg-gray-200 p-1 rounded-2xl shadow-inner">
         <button 
@@ -118,7 +136,7 @@ const CreateInspectionScreen: React.FC<CreateInspectionScreenProps> = ({ onCance
       {mode === 'quick' ? (
         <div className="space-y-4 animate-in fade-in duration-500">
           <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 space-y-4">
-             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">巡检结论结论</p>
+             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">巡检结论</p>
              <div className="flex gap-4">
                 <button 
                   onClick={() => setOverallStatus(InspectionStatus.NORMAL)}
@@ -165,21 +183,73 @@ const CreateInspectionScreen: React.FC<CreateInspectionScreenProps> = ({ onCance
               {MOCK_TEMPLATES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
            </div>
+           
            {items.map((item, idx) => (
-             <div key={item.id} className="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 flex justify-between items-center group">
-               <span className="text-sm font-black text-gray-700">{idx + 1}. {item.name}</span>
-               <div className="flex bg-gray-100 p-1 rounded-xl">
-                  <button 
-                    onClick={() => updateItemStatus(item.id, 'NORMAL')}
-                    className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all ${item.result === 'NORMAL' ? 'bg-green-500 text-white shadow-md' : 'text-gray-400'}`}
-                  >正常</button>
-                  <button 
-                    onClick={() => updateItemStatus(item.id, 'ABNORMAL')}
-                    className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all ${item.result === 'ABNORMAL' ? 'bg-red-500 text-white shadow-md' : 'text-gray-400'}`}
-                  >异常</button>
+             <div key={item.id} className="bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100 space-y-4 animate-in slide-in-from-right duration-300" style={{ animationDelay: `${idx * 50}ms` }}>
+               <div className="flex justify-between items-center">
+                 <span className="text-sm font-black text-gray-700">{idx + 1}. {item.name}</span>
+                 <div className="flex bg-gray-100 p-1 rounded-xl">
+                    <button 
+                      onClick={() => updateItemStatus(item.id, 'NORMAL')}
+                      className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all ${item.result === 'NORMAL' ? 'bg-green-500 text-white shadow-md' : 'text-gray-400'}`}
+                    >正常</button>
+                    <button 
+                      onClick={() => updateItemStatus(item.id, 'ABNORMAL')}
+                      className={`px-4 py-2 rounded-lg text-[10px] font-black transition-all ${item.result === 'ABNORMAL' ? 'bg-red-500 text-white shadow-md' : 'text-gray-400'}`}
+                    >异常</button>
+                 </div>
+               </div>
+
+               {/* Remark Input per Item */}
+               <div className="relative">
+                 <MessageSquare size={14} className="absolute left-3 top-3.5 text-gray-300" />
+                 <input 
+                   type="text"
+                   className="w-full pl-9 pr-4 py-3 bg-gray-50 rounded-xl outline-none font-bold text-xs border border-transparent focus:border-blue-100 transition-all"
+                   placeholder="添加备注信息..."
+                   value={item.remark || ''}
+                   onChange={(e) => updateItemRemark(item.id, e.target.value)}
+                 />
+               </div>
+
+               {/* Photos per Item */}
+               <div className="space-y-2">
+                 <div className="flex items-center gap-3">
+                   <button 
+                     onClick={() => addItemPhoto(item.id)}
+                     className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 active:bg-gray-200"
+                   >
+                     <Camera size={18} />
+                   </button>
+                   <span className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">
+                     {item.photos.length > 0 ? `已添加 ${item.photos.length} 张照片` : '拍摄现场取证照片'}
+                   </span>
+                 </div>
+                 
+                 {item.photos.length > 0 && (
+                   <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                     {item.photos.map((photo, pIdx) => (
+                       <div key={pIdx} className="relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border border-gray-100 shadow-sm group">
+                         <img src={photo} className="w-full h-full object-cover" alt="item thumbnail" />
+                         <button 
+                           onClick={() => removeItemPhoto(item.id, pIdx)}
+                           className="absolute top-0.5 right-0.5 bg-black/50 text-white p-0.5 rounded-full"
+                         >
+                           <X size={10} />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 )}
                </div>
              </div>
            ))}
+           
+           {items.length === 0 && selectedTemplateId && (
+             <div className="text-center py-10 text-gray-300 font-bold text-xs uppercase tracking-widest">
+               模板无巡检项数据
+             </div>
+           )}
         </div>
       )}
 
