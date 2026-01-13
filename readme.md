@@ -24,37 +24,61 @@
 
 ---
 
-## 三、 Android Studio 打包与原生重构方案
+## 三、 Android Studio 深度集成方案
 
-### 1. 快速打包 APK (混合模式)
-使用 **Capacitor** 将当前 Web 项目打包为 Android 安装包：
-1. `npm install @capacitor/core @capacitor/cli`
-2. `npx cap init` (设置 App 名称与 ID)
-3. `npm install @capacitor/android && npx cap add android`
-4. `npx cap copy` 将网页资源同步至安卓工程。
-5. 在 Android Studio 中 `Build APK`。
+除了传统的纯原生重构，您还可以通过以下两种方式在 Android Studio 中充分利用现有 Web UI：
+
+### 1. 混合集成方案 (Compose + WebView) —— **推荐方案**
+这种方式能够最大限度保留 Web 端开发的高效率，同时通过原生壳子调用硬件能力。
+
+#### A. 实现原理
+在 Jetpack Compose 中使用 `AndroidView` 嵌入 `WebView`，并建立 **JavaScriptInterface (JS Bridge)** 实现双向通信。
+
+#### B. 关键代码示例 (Kotlin)
+```kotlin
+// 在 Compose 中加载 Web 界面
+@Composable
+fun InspectionWebView(url: String, onPhotoTaken: (String) -> Unit) {
+    AndroidView(factory = { context ->
+        WebView(context).apply {
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            // 注入 JS 桥接对象
+            addJavascriptInterface(object {
+                @JavascriptInterface
+                fun openNativeCamera() {
+                    // 调用 Android 原生 CameraX 拍照
+                    onPhotoTaken("base64_data")
+                }
+            }, "AndroidBridge")
+            loadUrl(url)
+        }
+    }, modifier = Modifier.fillMaxSize())
+}
+```
+
+#### C. 优势
+- **UI 一致性**：直接复用 React 编写的高保真工业风界面。
+- **动态更新**：Web 端资源更新后，App 无需重新发版（若使用远程加载）。
+- **原生增强**：在 WebView 上层覆盖原生 Compose 按钮或加载动画。
+
+---
 
 ### 2. 原生重构指南 (Jetpack Compose)
-若要获得极致性能与原生硬件访问，请按照以下映射表进行重构：
+若要获得极致性能与系统级离线语音包支持，请参考以下映射：
 
 #### A. 技术栈映射
 | 模块 | Web 实现 | Android 原生实现 (Compose) |
 | :--- | :--- | :--- |
 | **UI 框架** | React + Tailwind | **Jetpack Compose (Material 3)** |
 | **状态管理** | `useState` / `useEffect` | `ViewModel` + `StateFlow` |
-| **本地存储** | 内存 / LocalStorage | **Room Persistence Library** (SQLite) |
-| **导航** | Screen 状态切换 | **Compose Navigation** |
+| **本地存储** | 内存 / LocalStorage | **Room Persistence Library** |
 | **语音识别** | Web Speech API | **SpeechRecognizer (支持离线语音包)** |
 
-#### B. 核心功能原生实现方案
-- **离线 STT (语音转文字)**：
-  使用 `RecognizerIntent.EXTRA_PREFER_OFFLINE` 调用系统离线模型。需在 `AndroidManifest.xml` 中声明 `RECORD_AUDIO` 权限。
-- **UI 风格迁移**：
-  将 Tailwind 的大圆角 (`rounded-[2rem]`) 映射为 `RoundedCornerShape(32.dp)`。使用 `Scaffold` 管理顶部标题栏和底部导航。
-- **数据持久化**：
-  定义 `@Entity` 存储巡检记录。针对“现场即时整改”，在 `ViewModel` 中根据勾选逻辑在保存时直接设置 `status = REVIEWED`。
-- **硬件集成**：
-  使用 **CameraX** 实现拍照并存入 App 私有目录；使用 **LocationServices** 获取 GPS 坐标（用于井口或有信号区域）。
+#### B. 核心功能原生实现
+- **离线 STT**：使用 `RecognizerIntent.EXTRA_PREFER_OFFLINE` 调用系统离线模型。
+- **UI 风格迁移**：将 Tailwind 的大圆角 (`rounded-[2rem]`) 映射为 `RoundedCornerShape(32.dp)`。
+- **数据持久化**：针对“现场即时整改”，在 `ViewModel` 保存逻辑中直接根据布尔值设置 `status = REVIEWED` 并插入整改记录。
 
 ---
 
@@ -67,9 +91,6 @@
 ### 2. AI 智能化
 - **缺陷识别**：利用 Gemini Multimodal 接口分析现场照片，识别皮带跑偏、漏油等异常。
 - **智能排班**：根据巡检频次和隐患等级自动推荐巡检优先级。
-
-### 3. 数据同步
-- **增量同步机制**：升井后自动上传离线数据，确保中心台账与终端一致。
 
 ---
 
