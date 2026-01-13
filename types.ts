@@ -38,8 +38,9 @@ export interface InspectionRecord {
   remark?: string;
   items: InspectionItem[];
   rectifyLogs?: RectifyLog[];
-  // Added reviewResult to support pass/fail status when an inspection is reviewed
   reviewResult?: 'PASS' | 'FAIL';
+  // 新增：巡检员手写签名 Base64
+  signature?: string;
 }
 
 export interface LocationDef {
@@ -49,8 +50,8 @@ export interface LocationDef {
   area: string;
   hasNFC: boolean;
   hasQR: boolean;
-  nfcTagId?: string; // 物理 NFC UID
-  qrTagId?: string;  // 外部绑定二维码 ID (若是外部贴纸)
+  nfcTagId?: string;
+  qrTagId?: string;
   nfcBindDate?: number;
   qrBindDate?: number;
   lastInspectionDate?: number;
