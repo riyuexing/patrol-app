@@ -2,14 +2,15 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Plus, Search, Trash2, AlertCircle, CheckCircle, 
-  Clock, Construction, ClipboardList, RefreshCw, Calendar, ChevronDown, Filter, X, Tag, MoreHorizontal, Check
+  Clock, Construction, ClipboardList, RefreshCw, Calendar, ChevronDown, Filter, X, Tag, MoreHorizontal, Check, QrCode
 } from 'lucide-react';
 import { db } from '../db';
 import { InspectionRecord, InspectionStatus } from '../types';
+import ScannerModal from '../components/ScannerModal';
 
 interface InspectionListScreenProps {
   onViewDetail: (id: string) => void;
-  onCreateNew: () => void;
+  onCreateNew: (initialData?: { location: string; code: string }) => void;
 }
 
 type TimeFilterType = 'ALL' | 'TODAY' | 'YESTERDAY' | 'WEEK' | 'MONTH' | 'CUSTOM';
@@ -25,6 +26,7 @@ const InspectionListScreen: React.FC<InspectionListScreenProps> = ({ onViewDetai
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showScanner, setShowScanner] = useState(false);
   
   // Swipe States
   const [swipedId, setSwipedId] = useState<string | null>(null);
@@ -90,7 +92,11 @@ const InspectionListScreen: React.FC<InspectionListScreenProps> = ({ onViewDetai
     }
   };
 
-  // Selection Logic
+  const handleScanSuccess = (location: string, code: string) => {
+    setShowScanner(false);
+    onCreateNew({ location, code });
+  };
+
   const toggleSelection = (id: string) => {
     const next = new Set(selectedIds);
     if (next.has(id)) next.delete(id);
@@ -326,12 +332,27 @@ const InspectionListScreen: React.FC<InspectionListScreenProps> = ({ onViewDetai
       </div>
 
       {!isSelectionMode && (
-        <button 
-          onClick={onCreateNew}
-          className="fixed bottom-24 right-6 w-16 h-16 bg-blue-600 text-white rounded-3xl shadow-2xl shadow-blue-300 flex items-center justify-center active:scale-90 active:rotate-90 transition-all duration-300 z-30 border-4 border-white/20"
-        >
-          <Plus size={32} strokeWidth={3} />
-        </button>
+        <div className="fixed bottom-24 right-6 flex flex-col gap-4 items-center z-30">
+          <button 
+            onClick={() => setShowScanner(true)}
+            className="w-14 h-14 bg-white text-blue-600 rounded-2xl shadow-xl flex items-center justify-center active:scale-90 transition-all border border-blue-100"
+          >
+            <QrCode size={24} strokeWidth={2.5} />
+          </button>
+          <button 
+            onClick={() => onCreateNew()}
+            className="w-16 h-16 bg-blue-600 text-white rounded-3xl shadow-2xl shadow-blue-300 flex items-center justify-center active:scale-90 active:rotate-90 transition-all duration-300 border-4 border-white/20"
+          >
+            <Plus size={32} strokeWidth={3} />
+          </button>
+        </div>
+      )}
+
+      {showScanner && (
+        <ScannerModal 
+          onScanSuccess={handleScanSuccess} 
+          onClose={() => setShowScanner(false)} 
+        />
       )}
     </div>
   );

@@ -16,6 +16,7 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<'list' | 'profile'>('list');
   const [selectedInspectionId, setSelectedInspectionId] = useState<string | null>(null);
+  const [initialCreateData, setInitialCreateData] = useState<{ location: string; code: string } | undefined>();
 
   // 主题状态
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('light');
@@ -109,15 +110,25 @@ const App: React.FC = () => {
               setSelectedInspectionId(id);
               setCurrentScreen('detail');
             }}
-            onCreateNew={() => setCurrentScreen('create')}
+            onCreateNew={(initialData) => {
+              setInitialCreateData(initialData);
+              setCurrentScreen('create');
+            }}
           />
         );
       case 'create':
         return (
           <CreateInspectionScreen 
-            onCancel={() => setCurrentScreen('home')}
-            onSave={() => setCurrentScreen('home')}
+            onCancel={() => {
+              setCurrentScreen('home');
+              setInitialCreateData(undefined);
+            }}
+            onSave={() => {
+              setCurrentScreen('home');
+              setInitialCreateData(undefined);
+            }}
             user={currentUser!}
+            initialData={initialCreateData}
           />
         );
       case 'detail':
