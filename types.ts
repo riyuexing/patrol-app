@@ -28,7 +28,7 @@ export enum AbnormalLevel {
 export interface RectifyLog {
   timestamp: number;
   remark: string;
-  photo?: string;
+  photos?: string[];
 }
 
 export interface InspectionItem {
