@@ -1,3 +1,4 @@
+
 # 智巡煤矿 (Smart Inspection System)
 
 ## 一、 项目概述
@@ -14,87 +15,62 @@
     - **极速操作**：支持长按多选批量删除，以及向左滑动单条快速删除。
     - **轻量统计**：顶部展示个人巡检记录、发现异常数、待整改数。
 - **新建巡检**：
-    - **快速模式**：针对现场紧急情况，仅需“拍照+状态+备注”即可完成。
+    - **快速模式**：支持“拍照+状态+备注”极速完成。新增“现场即时整改”功能，勾选后记录直接以“已复查”状态归档，自动生成整改日志。
     - **高级模式**：基于预置模板，支持逐项打分，每一项均可独立关联多张照片和备注。
 - **详情与整改闭环**：
     - **业务时间轴**：清晰记录“发现异常 -> 多次整改追加 -> 自检确认”的完整生命周期。
     - **上下文操作**：根据当前状态动态提供“开始整改”、“追加进展”或“复查通过”按钮。
-
-### 2. 技术亮点
-- **离线驱动**：前端模拟 DB 架构，所有状态变更即时生效，无需等待网络响应。
-- **工业级 UI/UX**：
-    - 适配单手操作（按钮高度 >= 48dp）。
-    - 强对比度色值（Red-600, Blue-600）提升辨识度。
-    - 符合人体工学的圆角卡片（2rem）与平滑动效。
+- **语音集成**：集成 Web Speech API，支持在备注、整改说明等关键输入框使用语音转文字，降低井下录入成本。
 
 ---
 
-## 三、 优化与扩展方向
+## 三、 Android Studio 打包与原生重构方案
 
-### 1. 硬件集成 (Near Future)
-- **NFC/扫码巡检**：集成硬件扫描，强制巡检员到达物理位置点后方可解锁模板，杜绝“空巡”。
-- **传感器联动**：通过蓝牙集成便携式瓦斯检测仪，自动填充检测数值。
+### 1. 快速打包 APK (混合模式)
+使用 **Capacitor** 将当前 Web 项目打包为 Android 安装包：
+1. `npm install @capacitor/core @capacitor/cli`
+2. `npx cap init` (设置 App 名称与 ID)
+3. `npm install @capacitor/android && npx cap add android`
+4. `npx cap copy` 将网页资源同步至安卓工程。
+5. 在 Android Studio 中 `Build APK`。
 
-### 2. AI 智能化 (Medium Term)
-- **缺陷自动识别**：利用 Gemini Multimodal 接口，实时分析拍摄照片，识别皮带跑偏、支架漏液等常见隐患。
-- **语音输入辅助**：针对井下打字不便，集成 STT 语音转文字录入备注。
+### 2. 原生重构指南 (Jetpack Compose)
+若要获得极致性能与原生硬件访问，请按照以下映射表进行重构：
 
-### 3. 数据与管理 (Long Term)
-- **中心端同步**：建立增量同步机制，在升井检测到信号时自动上传数据，清理本地缓存。
-- **角色权限**：增加“安监员”与“区队长”角色，实现多级审批流。
+#### A. 技术栈映射
+| 模块 | Web 实现 | Android 原生实现 (Compose) |
+| :--- | :--- | :--- |
+| **UI 框架** | React + Tailwind | **Jetpack Compose (Material 3)** |
+| **状态管理** | `useState` / `useEffect` | `ViewModel` + `StateFlow` |
+| **本地存储** | 内存 / LocalStorage | **Room Persistence Library** (SQLite) |
+| **导航** | Screen 状态切换 | **Compose Navigation** |
+| **语音识别** | Web Speech API | **SpeechRecognizer (支持离线语音包)** |
+
+#### B. 核心功能原生实现方案
+- **离线 STT (语音转文字)**：
+  使用 `RecognizerIntent.EXTRA_PREFER_OFFLINE` 调用系统离线模型。需在 `AndroidManifest.xml` 中声明 `RECORD_AUDIO` 权限。
+- **UI 风格迁移**：
+  将 Tailwind 的大圆角 (`rounded-[2rem]`) 映射为 `RoundedCornerShape(32.dp)`。使用 `Scaffold` 管理顶部标题栏和底部导航。
+- **数据持久化**：
+  定义 `@Entity` 存储巡检记录。针对“现场即时整改”，在 `ViewModel` 中根据勾选逻辑在保存时直接设置 `status = REVIEWED`。
+- **硬件集成**：
+  使用 **CameraX** 实现拍照并存入 App 私有目录；使用 **LocationServices** 获取 GPS 坐标（用于井口或有信号区域）。
 
 ---
 
-## 四、 Android Studio (Jetpack Compose) 原生实现指南
+## 四、 优化与扩展方向 (未来规划)
 
-若要将本项目迁移至 Android 原生开发，请参考以下设计架构：
+### 1. 硬件增强
+- **NFC/扫码巡检**：强制巡检员到达物理位置点后解锁模板，杜绝“空巡”。
+- **传感器联动**：通过蓝牙集成便携式检测仪，自动填充瓦斯/一氧化碳数值。
 
-### 1. 技术栈推荐
-- **UI 框架**：Jetpack Compose (Material 3)
-- **架构模式**：MVVM (Model-View-ViewModel)
-- **本地存储**：Room Persistence Library (替代当前的 `db.ts`)
-- **图片处理**：Coil (加载 base64 或本地文件)
-- **导航**：Compose Navigation
+### 2. AI 智能化
+- **缺陷识别**：利用 Gemini Multimodal 接口分析现场照片，识别皮带跑偏、漏油等异常。
+- **智能排班**：根据巡检频次和隐患等级自动推荐巡检优先级。
 
-### 2. 关键组件映射
-| Web 功能 (本项目) | Compose 对应实现 |
-| :--- | :--- |
-| `Layout.tsx` | `Scaffold` + `BottomAppBar` + `ModalNavigationDrawer` |
-| 列表展示 | `LazyColumn` |
-| 侧滑删除 | `SwipeToDismissBox` (Material 3 官方组件) |
-| 长按选择 | `Modifier.combinedClickable` |
-| 状态管理 | `ViewModel` + `StateFlow` (实现响应式 UI 刷新) |
-| 动画效果 | `AnimatedVisibility` & `rememberInfiniteTransition` |
+### 3. 数据同步
+- **增量同步机制**：升井后自动上传离线数据，确保中心台账与终端一致。
 
-### 3. 核心代码设计建议 (Kotlin)
-- **数据实体 (Room)**：
-  ```kotlin
-  @Entity(tableName = "inspections")
-  data class InspectionEntity(
-      @PrimaryKey val id: String,
-      val location: String,
-      val status: String,
-      val timestamp: Long
-  )
-  ```
-- **ViewModel 逻辑**：
-  ```kotlin
-  class InspectionViewModel : ViewModel() {
-      private val _records = MutableStateFlow<List<InspectionRecord>>(emptyList())
-      val records = _records.asStateFlow()
-      
-      fun deleteSelected() { /* 调用 Repository 删除数据 */ }
-  }
-  ```
-- **列表项 UI**：
-  ```kotlin
-  @Composable
-  fun InspectionItem(record: InspectionRecord, isSelected: Boolean) {
-      Card(
-          shape = RoundedCornerShape(24.dp),
-          modifier = Modifier.padding(8.dp).fillMaxWidth()
-      ) {
-          // 使用 Row 和 Column 复刻当前的 Flex 布局
-      }
-  }
-  ```
+---
+
+> **智巡工业终端安全管控引擎** - 致力于打造最懂煤矿工人的数字化工具。
