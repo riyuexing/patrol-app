@@ -3,6 +3,7 @@
   "description": "A high-fidelity industrial-grade inspection application designed for offline-first coal mine safety monitoring, featuring quick/advanced recording modes and full status lifecycle management.",
   "requestFramePermissions": [
     "camera",
+    "microphone",
     "geolocation"
   ]
 }
