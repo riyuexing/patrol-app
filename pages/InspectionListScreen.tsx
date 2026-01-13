@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Plus, Search, Trash2, AlertCircle, CheckCircle, 
-  Clock, Construction, ClipboardList, RefreshCw, Calendar, ChevronDown, Filter, X, Tag, MoreHorizontal, Check, QrCode, Radio
+  Clock, Construction, ClipboardList, RefreshCw, Calendar, ChevronDown, Filter, X, Tag, MoreHorizontal, Check, QrCode, Radio,
+  Activity, BarChart3, TrendingUp, MapPin
 } from 'lucide-react';
 import { db } from '../db';
 import { InspectionRecord, InspectionStatus } from '../types';
@@ -148,19 +149,19 @@ const InspectionListScreen: React.FC<InspectionListScreenProps> = ({ onViewDetai
   ];
 
   return (
-    <div className="p-4 space-y-4 pb-32">
-      {/* 顶部统计或操作栏 */}
+    <div className="p-4 space-y-5 pb-32">
+      {/* 顶部醒目统计卡片 */}
       {isSelectionMode ? (
-        <div className="bg-blue-600 p-4 rounded-3xl shadow-xl flex items-center justify-between text-white animate-in slide-in-from-top duration-300">
+        <div className="bg-blue-600 p-5 rounded-[2rem] shadow-xl flex items-center justify-between text-white animate-in slide-in-from-top duration-300">
           <div className="flex items-center gap-3">
-            <button onClick={() => { setIsSelectionMode(false); setSelectedIds(new Set()); }} className="p-1 hover:bg-white/10 rounded-full">
+            <button onClick={() => { setIsSelectionMode(false); setSelectedIds(new Set()); }} className="p-2 bg-white/10 rounded-full transition-colors active:scale-90">
               <X size={20} />
             </button>
             <span className="font-black text-sm uppercase tracking-widest">已选择 {selectedIds.size} 项</span>
           </div>
           <button 
             onClick={handleBatchDelete}
-            className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500 px-4 py-2 rounded-2xl transition-colors font-black text-xs"
+            className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500 px-5 py-2.5 rounded-2xl transition-all font-black text-xs active:scale-95"
           >
             <Trash2 size={16} />
             批量删除
@@ -168,17 +169,52 @@ const InspectionListScreen: React.FC<InspectionListScreenProps> = ({ onViewDetai
         </div>
       ) : (
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1">我的巡检</p>
-            <p className="text-2xl font-black text-gray-800 leading-none">{stats.total}</p>
+          {/* 总计卡片 */}
+          <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 to-blue-700 p-4 rounded-[2rem] shadow-lg shadow-blue-100 dark:shadow-none animate-in fade-in slide-in-from-top-2 duration-500">
+            <div className="absolute -right-2 -top-2 opacity-10">
+              <BarChart3 size={64} />
+            </div>
+            <div className="flex flex-col justify-between h-full space-y-3">
+              <div className="p-2 bg-white/10 w-fit rounded-xl">
+                <ClipboardList size={16} className="text-blue-100" />
+              </div>
+              <div>
+                <p className="text-2xl font-black text-white leading-none">{stats.total}</p>
+                <p className="text-[10px] font-bold text-blue-100 mt-1 uppercase tracking-tighter">累计巡检</p>
+              </div>
+            </div>
           </div>
-          <div className="bg-red-500 p-4 rounded-3xl shadow-lg shadow-red-100 animate-in fade-in slide-in-from-top-2 duration-300 delay-75">
-            <p className="text-[10px] font-black text-white/70 uppercase tracking-tighter mb-1">发现异常</p>
-            <p className="text-2xl font-black text-white leading-none">{stats.abnormal}</p>
+
+          {/* 异常卡片 */}
+          <div className="relative overflow-hidden bg-gradient-to-br from-red-500 to-red-600 p-4 rounded-[2rem] shadow-lg shadow-red-100 dark:shadow-none animate-in fade-in slide-in-from-top-2 duration-500 delay-75">
+            <div className="absolute -right-2 -top-2 opacity-10">
+              <Activity size={64} />
+            </div>
+            <div className="flex flex-col justify-between h-full space-y-3">
+              <div className="p-2 bg-white/10 w-fit rounded-xl">
+                <AlertCircle size={16} className="text-red-100" />
+              </div>
+              <div>
+                <p className="text-2xl font-black text-white leading-none">{stats.abnormal}</p>
+                <p className="text-[10px] font-bold text-red-100 mt-1 uppercase tracking-tighter">发现异常</p>
+              </div>
+            </div>
           </div>
-          <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300 delay-150">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter mb-1">待整改</p>
-            <p className="text-2xl font-black text-orange-500 leading-none">{stats.rectifying}</p>
+
+          {/* 待整改卡片 */}
+          <div className="relative overflow-hidden bg-gradient-to-br from-orange-400 to-orange-500 p-4 rounded-[2rem] shadow-lg shadow-orange-100 dark:shadow-none animate-in fade-in slide-in-from-top-2 duration-500 delay-150">
+            <div className="absolute -right-2 -top-2 opacity-10">
+              <Construction size={64} />
+            </div>
+            <div className="flex flex-col justify-between h-full space-y-3">
+              <div className="p-2 bg-white/10 w-fit rounded-xl">
+                <TrendingUp size={16} className="text-orange-100" />
+              </div>
+              <div>
+                <p className="text-2xl font-black text-white leading-none">{stats.rectifying}</p>
+                <p className="text-[10px] font-bold text-orange-100 mt-1 uppercase tracking-tighter">待整改进度</p>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -186,10 +222,10 @@ const InspectionListScreen: React.FC<InspectionListScreenProps> = ({ onViewDetai
       {/* 搜索与筛选切换 */}
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
           <input 
             type="text"
-            className="w-full pl-10 pr-4 py-3 bg-white rounded-2xl border-none shadow-sm focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm transition-all"
+            className="w-full pl-12 pr-4 py-4 bg-white rounded-[1.5rem] border-none shadow-sm focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm transition-all dark:bg-gray-900"
             placeholder="搜索地点或编码..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -197,58 +233,61 @@ const InspectionListScreen: React.FC<InspectionListScreenProps> = ({ onViewDetai
         </div>
         <button 
           onClick={() => setIsFilterExpanded(!isFilterExpanded)}
-          className={`w-12 h-12 rounded-2xl shadow-sm flex items-center justify-center transition-all ${isFilterExpanded ? 'bg-blue-600 text-white shadow-blue-200' : 'bg-white text-gray-400 active:bg-gray-50'}`}
+          className={`w-14 h-14 rounded-[1.5rem] shadow-sm flex items-center justify-center transition-all ${isFilterExpanded ? 'bg-blue-600 text-white shadow-blue-200' : 'bg-white text-gray-400 active:bg-gray-50 dark:bg-gray-900'}`}
         >
-          {isFilterExpanded ? <ChevronDown size={20} /> : <Filter size={20} />}
+          {isFilterExpanded ? <ChevronDown size={22} /> : <Filter size={22} />}
         </button>
       </div>
 
       {/* 可折叠的筛选器 */}
       {isFilterExpanded && (
-        <div className="bg-white p-3 rounded-[2rem] shadow-sm border border-gray-100 space-y-4 animate-in slide-in-from-top duration-300 origin-top">
+        <div className="bg-white p-4 rounded-[2.5rem] shadow-sm border border-gray-100 space-y-5 animate-in slide-in-from-top duration-300 origin-top dark:bg-gray-900 dark:border-gray-800">
           {/* 时间筛选 */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 flex flex-col items-center justify-center text-gray-300">
-              <Calendar size={14} />
-              <span className="text-[8px] font-black uppercase mt-0.5 tracking-tighter">时间</span>
+          <div className="flex items-center gap-4">
+            <div className="w-10 flex flex-col items-center justify-center text-gray-300">
+              <Calendar size={18} />
+              <span className="text-[8px] font-black uppercase mt-1 tracking-tighter">Time</span>
             </div>
             <div className="flex-1 flex gap-2 overflow-x-auto no-scrollbar pb-1">
               {timeFilterOptions.map(opt => (
                 <button 
                   key={opt.value}
                   onClick={() => setTimeFilter(opt.value)}
-                  className={`px-3 py-1.5 text-[10px] font-black rounded-xl transition-all flex-shrink-0 border ${timeFilter === opt.value ? 'bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-100' : 'bg-gray-50 text-gray-400 border-transparent'}`}
+                  className={`px-4 py-2 text-[10px] font-black rounded-xl transition-all flex-shrink-0 border-2 ${timeFilter === opt.value ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-100' : 'bg-gray-50 text-gray-400 border-transparent dark:bg-gray-800'}`}
                 >
                   {opt.label}
                 </button>
               ))}
             </div>
           </div>
-          <div className="h-px bg-gray-50 mx-2"></div>
+          
+          <div className="h-px bg-gray-50 dark:bg-gray-800 mx-2"></div>
+          
           {/* 状态筛选 */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 flex flex-col items-center justify-center text-gray-300">
-              <Tag size={14} />
-              <span className="text-[8px] font-black uppercase mt-0.5 tracking-tighter">状态</span>
+          <div className="flex items-center gap-4">
+            <div className="w-10 flex flex-col items-center justify-center text-gray-300">
+              <Tag size={18} />
+              <span className="text-[8px] font-black uppercase mt-1 tracking-tighter">Status</span>
             </div>
             <div className="flex-1 flex gap-2 overflow-x-auto no-scrollbar pb-1">
               {statusFilterOptions.map(opt => (
                 <button 
                   key={opt.value}
                   onClick={() => setFilterStatus(opt.value)}
-                  className={`px-3 py-1.5 text-[10px] font-black rounded-xl transition-all flex-shrink-0 border ${filterStatus === opt.value ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-100' : 'bg-gray-50 text-gray-400 border-transparent'}`}
+                  className={`px-4 py-2 text-[10px] font-black rounded-xl transition-all flex-shrink-0 border-2 ${filterStatus === opt.value ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-100' : 'bg-gray-50 text-gray-400 border-transparent dark:bg-gray-800'}`}
                 >
                   {opt.label}
                 </button>
               ))}
             </div>
           </div>
+          
           {timeFilter === 'CUSTOM' && (
-            <div className="pt-2 mt-2 border-t border-dashed border-gray-100 animate-in zoom-in-95">
-              <div className="bg-blue-50/50 p-3 rounded-2xl flex items-center gap-3">
-                <input type="date" className="flex-1 bg-white px-3 py-2 rounded-xl text-[10px] font-bold outline-none border border-blue-100" value={customRange.start} onChange={(e) => setCustomRange(p => ({ ...p, start: e.target.value }))} />
+            <div className="pt-2 mt-2 border-t border-dashed border-gray-100 dark:border-gray-800 animate-in zoom-in-95">
+              <div className="bg-blue-50/50 dark:bg-blue-500/5 p-4 rounded-2xl flex items-center gap-4">
+                <input type="date" className="flex-1 bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl text-[10px] font-black outline-none border-2 border-blue-100 dark:border-blue-900 focus:border-blue-400 transition-colors" value={customRange.start} onChange={(e) => setCustomRange(p => ({ ...p, start: e.target.value }))} />
                 <span className="text-blue-300 text-xs font-black">至</span>
-                <input type="date" className="flex-1 bg-white px-3 py-2 rounded-xl text-[10px] font-bold outline-none border border-blue-100" value={customRange.end} onChange={(e) => setCustomRange(p => ({ ...p, end: e.target.value }))} />
+                <input type="date" className="flex-1 bg-white dark:bg-gray-800 px-4 py-2.5 rounded-xl text-[10px] font-black outline-none border-2 border-blue-100 dark:border-blue-900 focus:border-blue-400 transition-colors" value={customRange.end} onChange={(e) => setCustomRange(p => ({ ...p, end: e.target.value }))} />
               </div>
             </div>
           )}
@@ -256,15 +295,15 @@ const InspectionListScreen: React.FC<InspectionListScreenProps> = ({ onViewDetai
       )}
 
       {/* 列表区域 */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {filteredRecords.length > 0 ? filteredRecords.map(record => {
           const cfg = getStatusConfig(record.overallStatus);
           const isSwiped = swipedId === record.id;
           const isSelected = selectedIds.has(record.id);
           
           return (
-            <div key={record.id} className="relative overflow-hidden rounded-3xl bg-red-500 shadow-sm">
-              <div className="absolute inset-0 flex items-center justify-end px-6">
+            <div key={record.id} className="relative overflow-hidden rounded-[2rem] bg-red-500 shadow-sm border border-gray-100 dark:border-gray-800">
+              <div className="absolute inset-0 flex items-center justify-end px-8">
                 <button 
                   onClick={() => {
                     if (confirm('确定要删除此条记录吗？')) {
@@ -276,7 +315,7 @@ const InspectionListScreen: React.FC<InspectionListScreenProps> = ({ onViewDetai
                   className="text-white flex flex-col items-center gap-1 font-black"
                 >
                   <Trash2 size={24} />
-                  <span className="text-[10px]">删除</span>
+                  <span className="text-[10px] uppercase tracking-widest">Delete</span>
                 </button>
               </div>
 
@@ -289,33 +328,37 @@ const InspectionListScreen: React.FC<InspectionListScreenProps> = ({ onViewDetai
                   else if (isSwiped) setSwipedId(null);
                   else onViewDetail(record.id);
                 }}
-                className={`relative bg-white p-5 transition-transform duration-300 flex gap-4 ${isSwiped ? '-translate-x-28' : 'translate-x-0'} active:bg-gray-50`}
+                className={`relative bg-white dark:bg-gray-900 p-6 transition-transform duration-300 flex gap-4 ${isSwiped ? '-translate-x-28' : 'translate-x-0'} active:scale-[0.98] active:bg-gray-50 dark:active:bg-gray-800`}
               >
                 {/* 选择框 */}
                 {isSelectionMode && (
-                  <div className={`w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${isSelected ? 'bg-blue-600 border-blue-600 text-white' : 'border-gray-200 bg-gray-50'}`}>
-                    {isSelected && <Check size={14} strokeWidth={4} />}
+                  <div className={`w-7 h-7 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${isSelected ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200' : 'border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-700'}`}>
+                    {isSelected && <Check size={16} strokeWidth={4} />}
                   </div>
                 )}
 
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                      <h3 className="text-base font-black text-gray-800 tracking-tight">📍 {record.location}</h3>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1">
+                    <div className="space-y-2">
+                      <h3 className="text-base font-black text-gray-800 dark:text-gray-100 tracking-tight flex items-center gap-2">
+                        {/* Fix for line 344: MapPin should now be available from imports */}
+                        <MapPin size={16} className="text-primary" />
+                        {record.location}
+                      </h3>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-black text-gray-400 flex items-center gap-1 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-lg">
                           <Calendar size={10} />
                           {new Date(record.timestamp).toLocaleDateString([], { month: 'numeric', day: 'numeric' })}
                         </span>
-                        <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1">
+                        <span className="text-[10px] font-black text-gray-400 flex items-center gap-1 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded-lg">
                           <Clock size={10} />
                           {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
-                        <span className="text-[10px] bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded font-black tracking-widest">{record.locationCode}</span>
+                        <span className="text-[10px] bg-primary/5 text-primary px-2 py-1 rounded-lg font-black tracking-widest uppercase border border-primary/10">{record.locationCode}</span>
                       </div>
                     </div>
-                    <div className={`px-3 py-1.5 rounded-xl font-black text-[10px] flex items-center gap-1.5 ${cfg.color} border border-current/10`}>
-                      {cfg.icon}
+                    <div className={`px-4 py-2 rounded-2xl font-black text-[10px] flex items-center gap-2 ${cfg.color} border border-current/10 shadow-sm`}>
+                      {React.cloneElement(cfg.icon as any, { size: 14, strokeWidth: 3 })}
                       {cfg.label}
                     </div>
                   </div>
@@ -324,11 +367,13 @@ const InspectionListScreen: React.FC<InspectionListScreenProps> = ({ onViewDetai
             </div>
           );
         }) : (
-          <div className="py-20 flex flex-col items-center justify-center text-gray-300 space-y-4">
-            <ClipboardList size={48} strokeWidth={1} />
+          <div className="py-24 flex flex-col items-center justify-center text-gray-300 space-y-4 animate-in fade-in duration-700">
+            <div className="w-20 h-20 bg-gray-50 dark:bg-gray-800 rounded-[2rem] flex items-center justify-center text-gray-200">
+              <ClipboardList size={40} strokeWidth={1} />
+            </div>
             <div className="text-center">
-              <p className="text-sm font-bold">暂无巡检记录</p>
-              <p className="text-[10px] mt-1">点击下方按钮开始新的巡检</p>
+              <p className="text-sm font-black text-gray-400 uppercase tracking-widest">No Records Found</p>
+              <p className="text-[10px] mt-1 text-gray-300 font-bold">暂无符合条件的巡检记录</p>
             </div>
           </div>
         )}
@@ -338,19 +383,19 @@ const InspectionListScreen: React.FC<InspectionListScreenProps> = ({ onViewDetai
         <div className="fixed bottom-24 right-6 flex flex-col gap-4 items-center z-30">
           <button 
             onClick={() => setShowNFC(true)}
-            className="w-14 h-14 bg-indigo-600 text-white rounded-2xl shadow-xl flex items-center justify-center active:scale-90 transition-all border-2 border-white/20"
+            className="w-14 h-14 bg-indigo-600 text-white rounded-[1.5rem] shadow-xl flex items-center justify-center active:scale-90 transition-all border-4 border-white dark:border-gray-800 shadow-indigo-100 dark:shadow-none"
           >
             <Radio size={24} strokeWidth={2.5} className="animate-pulse" />
           </button>
           <button 
             onClick={() => setShowScanner(true)}
-            className="w-14 h-14 bg-white text-blue-600 rounded-2xl shadow-xl flex items-center justify-center active:scale-90 transition-all border border-blue-100"
+            className="w-14 h-14 bg-white text-blue-600 rounded-[1.5rem] shadow-xl flex items-center justify-center active:scale-90 transition-all border-4 border-gray-50 dark:bg-gray-900 dark:border-gray-800"
           >
             <QrCode size={24} strokeWidth={2.5} />
           </button>
           <button 
             onClick={() => onCreateNew()}
-            className="w-16 h-16 bg-blue-600 text-white rounded-3xl shadow-2xl shadow-blue-300 flex items-center justify-center active:scale-90 active:rotate-90 transition-all duration-300 border-4 border-white/20"
+            className="w-16 h-16 bg-blue-600 text-white rounded-[2rem] shadow-2xl shadow-blue-300 flex items-center justify-center active:scale-90 active:rotate-90 transition-all duration-500 border-4 border-white/20 dark:shadow-none"
           >
             <Plus size={32} strokeWidth={3} />
           </button>

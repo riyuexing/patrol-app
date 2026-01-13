@@ -4,7 +4,7 @@ import { db } from '../db';
 import { InspectionRecord, InspectionStatus, RectifyLog } from '../types';
 import { 
   Clock, MapPin, User, ChevronRight, AlertCircle, 
-  CheckCircle, Construction, ShieldCheck, Camera, X, PlusCircle, Calendar, Trash2, Send, Info
+  CheckCircle, Construction, ShieldCheck, Camera, X, PlusCircle, Calendar, Trash2, Send, Info, Maximize2
 } from 'lucide-react';
 import VoiceInputButton from '../components/VoiceInputButton';
 
@@ -19,6 +19,9 @@ const InspectionDetailScreen: React.FC<InspectionDetailScreenProps> = ({ inspect
   const [showReviewConfirm, setShowReviewConfirm] = useState(false);
   const [rectifyRemark, setRectifyRemark] = useState('');
   const [rectifyPhotos, setRectifyPhotos] = useState<string[]>([]);
+  
+  // 图片预览状态
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {
     const r = db.getInspections().find(i => i.id === inspectionId);
@@ -26,7 +29,7 @@ const InspectionDetailScreen: React.FC<InspectionDetailScreenProps> = ({ inspect
   }, [inspectionId]);
 
   const handleAddPhotoToRectify = () => {
-    const mockPhoto = `https://picsum.photos/400/300?sig=${Math.random()}`;
+    const mockPhoto = `https://picsum.photos/800/600?sig=${Math.random()}`;
     setRectifyPhotos([...rectifyPhotos, mockPhoto]);
   };
 
@@ -147,8 +150,15 @@ const InspectionDetailScreen: React.FC<InspectionDetailScreenProps> = ({ inspect
                 {item.photos && item.photos.length > 0 && (
                   <div className="flex gap-2 mt-4 overflow-x-auto pb-1 no-scrollbar">
                     {item.photos.map((p, i) => (
-                      <div key={i} className="flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800">
+                      <div 
+                        key={i} 
+                        onClick={() => setPreviewImage(p)}
+                        className="relative group flex-shrink-0 w-24 h-24 rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 active:scale-95 transition-all cursor-pointer"
+                      >
                         <img src={p} className="w-full h-full object-cover" alt="item photo" />
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                          <Maximize2 className="text-white" size={20} />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -190,8 +200,15 @@ const InspectionDetailScreen: React.FC<InspectionDetailScreenProps> = ({ inspect
                     {log.photos && log.photos.length > 0 && (
                       <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
                         {log.photos.map((ph, pIdx) => (
-                          <div key={pIdx} className="flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-inner">
+                          <div 
+                            key={pIdx} 
+                            onClick={() => setPreviewImage(ph)}
+                            className="relative group flex-shrink-0 w-28 h-28 rounded-2xl overflow-hidden border border-gray-100 dark:border-gray-800 shadow-inner active:scale-95 transition-all cursor-pointer"
+                          >
                             <img src={ph} className="w-full h-full object-cover" alt="rectify" />
+                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                              <Maximize2 className="text-white" size={24} />
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -214,6 +231,36 @@ const InspectionDetailScreen: React.FC<InspectionDetailScreenProps> = ({ inspect
           </section>
         )}
       </div>
+
+      {/* 图片全屏预览模态框 */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 bg-black/95 backdrop-blur-2xl z-[100] flex flex-col items-center justify-center animate-in fade-in duration-300"
+          onClick={() => setPreviewImage(null)}
+        >
+          <button 
+            className="absolute top-10 right-6 p-4 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-[110]"
+            onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}
+          >
+            <X size={28} strokeWidth={3} />
+          </button>
+          
+          <div 
+            className="w-full h-full flex items-center justify-center p-4 animate-in zoom-in-95 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img 
+              src={previewImage} 
+              className="max-w-full max-h-[85vh] object-contain rounded-3xl shadow-2xl" 
+              alt="fullscreen preview" 
+            />
+          </div>
+          
+          <div className="absolute bottom-12 px-6 py-3 bg-white/10 rounded-full text-white/60 text-[10px] font-black uppercase tracking-widest backdrop-blur-md">
+            点击背景或按钮返回
+          </div>
+        </div>
+      )}
 
       {/* Modals and Forms */}
       {showRectifyForm && (
@@ -285,7 +332,7 @@ const InspectionDetailScreen: React.FC<InspectionDetailScreenProps> = ({ inspect
 
       {showReviewConfirm && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center px-6">
-          <div className="bg-white dark:bg-gray-900 w-full max-w-sm p-8 rounded-[2rem] shadow-2xl animate-in zoom-in-95 duration-200 text-center space-y-6">
+          <div className="bg-white dark:bg-gray-900 w-full max-sm p-8 rounded-[2rem] shadow-2xl animate-in zoom-in-95 duration-200 text-center space-y-6">
             <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto">
               <ShieldCheck size={32} />
             </div>
@@ -295,7 +342,7 @@ const InspectionDetailScreen: React.FC<InspectionDetailScreenProps> = ({ inspect
             </div>
             <div className="flex flex-col gap-3">
               <button 
-                onClick={handleReviewFinish(true)}
+                onClick={() => handleReviewFinish(true)}
                 className="w-full py-4 bg-primary text-white rounded-2xl font-black text-sm shadow-xl shadow-primary/10 active:scale-95 transition-all"
               >
                 确认并结束任务

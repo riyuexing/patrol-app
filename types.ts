@@ -38,6 +38,8 @@ export interface InspectionRecord {
   remark?: string;
   items: InspectionItem[];
   rectifyLogs?: RectifyLog[];
+  // Added reviewResult to support pass/fail status when an inspection is reviewed
+  reviewResult?: 'PASS' | 'FAIL';
 }
 
 export interface LocationDef {
