@@ -8,8 +8,9 @@ import InspectionListScreen from './pages/InspectionListScreen';
 import CreateInspectionScreen from './pages/CreateInspectionScreen';
 import InspectionDetailScreen from './pages/InspectionDetailScreen';
 import ProfileScreen from './pages/ProfileScreen';
+import LocationManagementScreen from './pages/LocationManagementScreen';
 
-type Screen = 'splash' | 'login' | 'home' | 'create' | 'detail';
+type Screen = 'splash' | 'login' | 'home' | 'create' | 'detail' | 'locations';
 
 const App: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('splash');
@@ -87,11 +88,12 @@ const App: React.FC = () => {
   }
 
   const renderContent = () => {
-    if (activeTab === 'profile') {
+    if (activeTab === 'profile' && currentScreen !== 'locations') {
       return (
         <ProfileScreen 
           user={currentUser} 
           onLogout={handleLogout} 
+          onOpenLocations={() => setCurrentScreen('locations')}
           themeProps={{
             theme,
             setTheme,
@@ -138,21 +140,40 @@ const App: React.FC = () => {
             onBack={() => setCurrentScreen('home')}
           />
         ) : null;
+      case 'locations':
+        return (
+          <LocationManagementScreen />
+        );
       default:
         return null;
     }
   };
 
+  const getTitle = () => {
+    if (currentScreen === 'locations') return "地点库维护";
+    if (activeTab === 'profile') return "个人中心";
+    if (currentScreen === 'create') return "新建巡检";
+    if (currentScreen === 'detail') return "巡检详情";
+    return "巡检列表";
+  };
+
   return (
     <Layout 
-      title={activeTab === 'profile' ? "个人中心" : (currentScreen === 'create' ? "新建巡检" : (currentScreen === 'detail' ? "巡检详情" : "巡检列表"))}
+      title={getTitle()}
       activeTab={activeTab}
       onTabChange={(tab) => {
         setActiveTab(tab);
         if (tab === 'list') setCurrentScreen('home');
       }}
-      showBack={currentScreen !== 'home' && activeTab === 'list'}
-      onBack={() => setCurrentScreen('home')}
+      showBack={currentScreen !== 'home' && (activeTab === 'list' || currentScreen === 'locations')}
+      onBack={() => {
+        if (currentScreen === 'locations') {
+          setCurrentScreen('home');
+          setActiveTab('profile');
+        } else {
+          setCurrentScreen('home');
+        }
+      }}
     >
       {renderContent()}
     </Layout>

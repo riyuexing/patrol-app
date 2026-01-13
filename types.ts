@@ -12,19 +12,6 @@ export enum ShiftType {
   NIGHT = '夜班'
 }
 
-export enum AbnormalType {
-  SAFETY = '安全隐患',
-  EQUIPMENT = '设备缺陷',
-  MANAGEMENT = '管理问题',
-  OTHER = '其他'
-}
-
-export enum AbnormalLevel {
-  GENERAL = '一般',
-  LARGE = '较大',
-  CRITICAL = '重大'
-}
-
 export interface RectifyLog {
   timestamp: number;
   remark: string;
@@ -35,10 +22,8 @@ export interface InspectionItem {
   id: string;
   name: string;
   result: 'NORMAL' | 'ABNORMAL' | 'N/A';
-  abnormalType?: AbnormalType;
-  abnormalLevel?: AbnormalLevel;
+  photos: string[];
   remark?: string;
-  photos: string[]; // base64 strings
 }
 
 export interface InspectionRecord {
@@ -49,14 +34,24 @@ export interface InspectionRecord {
   shift: ShiftType;
   inspector: string;
   timestamp: number;
-  templateName?: string;
   overallStatus: InspectionStatus;
   remark?: string;
   items: InspectionItem[];
-  rectifyLogs?: RectifyLog[]; // Support for multiple rectification submissions
-  reviewResult?: 'PASS' | 'FAIL';
-  latitude?: number;
-  longitude?: number;
+  rectifyLogs?: RectifyLog[];
+}
+
+export interface LocationDef {
+  id: string;
+  name: string;
+  code: string;
+  area: string;
+  hasNFC: boolean;
+  hasQR: boolean;
+  nfcTagId?: string; // 物理 NFC UID
+  qrTagId?: string;  // 外部绑定二维码 ID (若是外部贴纸)
+  nfcBindDate?: number;
+  qrBindDate?: number;
+  lastInspectionDate?: number;
 }
 
 export interface User {
